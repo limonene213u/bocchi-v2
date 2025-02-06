@@ -1,15 +1,21 @@
-import { defineConfig } from 'vite';
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
+import path from 'path'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   server: {
     fs: {
       allow: [
-        '/Users/limonene/MyProject/vrm-js/bocchi-vrm-v2/src',
-        '/Users/limonene/MyProject/vrm-js/bocchi-vrm-v2/public',
-      ],
-    },
+        // Unix系パス（Mac/Linux用）
+        path.resolve('/Users/limonene/MyProject/vrm-js/bocchi-vrm-v2/src'),
+        // Windowsパス（正規化済み）
+        path.resolve('C:/Users/limonene/MyProject/vrm-js/bocchi-vrm-v2/public'),
+        // ワークスペースルート検出（マルチOS対応）
+        searchForWorkspaceRoot(process.cwd())
+      ]
+    }
   },
-    optimizeDeps: {
-        include: ["tsparticles"]
-    },
-});
+  optimizeDeps: {
+    include: ["tsparticles", 'gsap']
+  }
+})

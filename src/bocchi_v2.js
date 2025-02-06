@@ -1,114 +1,154 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRMLoaderPlugin, VRMUtils, VRMExpressionPresetName } from '@pixiv/three-vrm';
 import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
+import { CameraController } from './cameraControls.js';
 
-// シーンの作成
+// シーン初期化
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 1.5, 3);
-
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true,
+  precision: 'highp'
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x000000, 0); 
+renderer.setClearColor(0x000000, 0);
 document.body.appendChild(renderer.domElement);
 
-// Camera controls
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.screenSpacePanning = true;
-controls.target.set(0.0, 1.0, 0.0);
-controls.update();
+// ライト設定
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+scene.add(ambientLight);
 
-// Light
-const light = new THREE.DirectionalLight(0xffffff, Math.PI);
-light.position.set(1.0, 1.0, 1.0).normalize();
-scene.add(light);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+directionalLight.position.set(1, 3, 2).normalize();
+scene.add(directionalLight);
 
-let vrm;
-let clock = new THREE.Clock();
-let mixer;
-
-// **GLTFLoaderを統一**
+// VRMローダー設定
 const loader = new GLTFLoader();
 loader.register((parser) => new VRMLoaderPlugin(parser));
 loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
 
-loader.load('/bocchi-v2-00.vrm', (gltf) => {
-  vrm = gltf.userData.vrm;
-  VRMUtils.rotateVRM0(vrm);
-  scene.add(vrm.scene);
-  
-  // 表情設定
+// アニメーション用変数
+let vrm, mixer, clock = new THREE.Clock();
+let lipSyncIndex = 0, lipSyncInterval;
+
+// VRM読み込み処理
+loader.load('/bocchi-v2-00_g.vrm', async (gltf) => {
+  try {
+    vrm = gltf.userData.vrm;
+    VRMUtils.rotateVRM0(vrm);
+    scene.add(vrm.scene);
+
+    // カメラコントローラー初期化（モデル読み込み後）
+    const { camera, controls } = CameraController.initialize(
+      scene,
+      renderer,
+      vrm.scene  // モデルを直接渡す
+    );
+
+    // 表情初期設定
+    initExpressions(vrm);
+    initLipSync(vrm);
+    initBlink(vrm);
+
+    // アニメーションクリップ読み込み
+    await loadVRMAnimation('/vrma/noko.vrma', vrm);
+
+    // カメラアニメーション開始
+    CameraController.startCameraAnimations();
+
+    // アニメーションループ開始
+    animate(renderer, camera, controls);
+
+  } catch (error) {
+    console.error('初期化エラー:', error);
+  }
+});
+
+// 表情管理関数
+function initExpressions(vrm) {
   vrm.expressionManager.setValue(VRMExpressionPresetName.Happy, 0.5);
   vrm.expressionManager.setValue(VRMExpressionPresetName.Aa, 0.2);
   vrm.expressionManager.setValue(VRMExpressionPresetName.Ee, 0.5);
-  console.log("表情リスト:", vrm.expressionManager.expressionMap);
+  console.log("利用可能な表情:", Object.keys(vrm.expressionManager.expressionMap));
+}
 
-  //自動まばたき
-  function startBlinking() {
-    setInterval(() => {
-      if (vrm) {
-        // まばたき開始
-        vrm.expressionManager.setValue(VRMExpressionPresetName.Blink, 0.8);
-        vrm.expressionManager.update();
-  
-        // まばたき終了（0.1秒後に目を開ける）
-        setTimeout(() => {
-          vrm.expressionManager.setValue(VRMExpressionPresetName.Blink, 0.0);
-          vrm.expressionManager.update();
-        }, 80);
-      }
-    }, 3000 + Math.random() * 2000); // 3秒〜5秒のランダム間隔でまばたき
-  }
+// リップシンク設定
+function initLipSync(vrm) {
+  const mouthExpressions = [
+    VRMExpressionPresetName.Ih, VRMExpressionPresetName.Aa,
+    VRMExpressionPresetName.Ou, VRMExpressionPresetName.Ee,
+    VRMExpressionPresetName.Ou, VRMExpressionPresetName.Ee,
+    VRMExpressionPresetName.Aa, VRMExpressionPresetName.Ou,
+    VRMExpressionPresetName.Ee, VRMExpressionPresetName.Aa,
+    VRMExpressionPresetName.Nn
+  ];
 
-  // **VRMAのロード（同じloaderを使用する）**
-  loader.load('/vrma/shika.vrma', (animGltf) => {
-    if (!animGltf.userData.vrmAnimations || animGltf.userData.vrmAnimations.length === 0) {
-      console.error('VRMAデータが正しくありません');
-      return;
+  lipSyncInterval = setInterval(() => {
+    const current = mouthExpressions[lipSyncIndex];
+    vrm.expressionManager.setValue(current, 0.4);
+    
+    setTimeout(() => {
+      vrm.expressionManager.setValue(current, 0.0);
+    }, 200);
+
+    lipSyncIndex = (lipSyncIndex + 1) % mouthExpressions.length;
+  }, 300);
+}
+
+// 自動まばたき設定
+function initBlink(vrm) {
+  setInterval(() => {
+    vrm.expressionManager.setValue(VRMExpressionPresetName.Blink, 0.8);
+    vrm.expressionManager.update();
+
+    setTimeout(() => {
+      vrm.expressionManager.setValue(VRMExpressionPresetName.Blink, 0.0);
+      vrm.expressionManager.update();
+    }, 80);
+  }, 3000 + Math.random() * 2000);
+}
+
+// VRMアニメーション読み込み
+async function loadVRMAnimation(url, vrm) {
+  try {
+    const animGltf = await loader.loadAsync(url);
+    if (!animGltf.userData.vrmAnimations?.[0]) {
+      throw new Error('無効なVRMAファイル');
     }
 
-    const vrmAnimation = animGltf.userData.vrmAnimations[0];
-    console.log("VRMAのデータ構造:", animGltf.userData);
-    console.log("表情アニメーション:", vrmAnimation.expressionTracks);
+    const clip = createVRMAnimationClip(
+      animGltf.userData.vrmAnimations[0],
+      vrm
+    );
 
-    // `vrmMeta` の安全なチェック
-    if (vrmAnimation.vrmMeta && vrmAnimation.vrmMeta.metaVersion) {
-      console.log("VRMAの仕様バージョン:", vrmAnimation.vrmMeta.metaVersion);
-    } else {
-      console.warn("⚠ VRMAファイルに metaVersion がありません。仮のバージョンを設定します。");
-      vrmAnimation.vrmMeta = { metaVersion: "1.0" }; // 仮のバージョンを設定
-    }
+    mixer = new THREE.AnimationMixer(vrm.scene);
+    mixer.clipAction(clip).play();
 
-    try {
-      // **VRMAのアニメーションを適用**
-      const clip = createVRMAnimationClip(vrmAnimation, vrm); // 最新仕様に合わせた引数順に修正
-      mixer = new THREE.AnimationMixer(vrm.scene);
-      const action = mixer.clipAction(clip);
-      action.play();
-    } catch (error) {
-      console.error("VRMアニメーションの適用に失敗しました:", error);
-    }
-  });
-
-  // **まばたき開始**
-  startBlinking();
-
-  animate();
-});
-
-function animate() {
-  requestAnimationFrame(animate);
-  const deltaTime = clock.getDelta();
-  
-  if (vrm) {
-    vrm.update(deltaTime); 
+  } catch (error) {
+    console.error('アニメーション読み込みエラー:', error);
   }
+}
 
-  if (mixer) {
-    mixer.update(deltaTime);
-  }
+// アニメーションループ
+function animate(renderer, camera, controls) {
+  requestAnimationFrame(() => animate(renderer, camera, controls));
+  const delta = clock.getDelta();
 
+  // VRM更新
+  if (vrm) vrm.update(delta);
+  if (mixer) mixer.update(delta);
+
+  // カメラ更新
+  CameraController.updateCameraMotion();
+
+  // レンダリング
   renderer.render(scene, camera);
 }
+
+// ウィンドウリサイズ処理
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
