@@ -1,6 +1,5 @@
 import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import path from 'path'
-import { defineConfig } from 'vite'
 
 export default defineConfig({
   server: {
