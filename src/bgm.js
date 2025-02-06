@@ -14,7 +14,7 @@ export function startBGM() {
     sound = new THREE.Audio(listener);
     const audioLoader = new THREE.AudioLoader();
 
-    audioLoader.load('/bgm.mp3', function (buffer) {
+    audioLoader.load('/bgm_v2.mp3', function (buffer) {
         sound.setBuffer(buffer);
         sound.setLoop(true);
         sound.setVolume(0.5);
