@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ぼっちちゃん召喚</title>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+    <script type="module" src="/src/particles.js"></script>
+    <script type="module" src="/src/bocchi_2.js"></script>
+    <!-- 外部CSSを読み込む -->
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+    <canvas id="projector"></canvas>  <!-- パーティクル背景 -->
+    <canvas id="vrmCanvas"></canvas>  <!-- ぼっちちゃん表示 -->
+    <!-- **流れるコメントエリア** -->
+    <div id="commentsContainer"></div>
+
+    <script type="module" src="/src/comments.js"></script> <!-- コメントスクリプト -->
+    <script type="module" src="/src/bgm.js"></script> <!-- BGMスクリプト -->
+
+    <button id="playBGM">BGMをループ再生</button>
+    <div id="volume-control">
+        <label for="volume">🔊</label>
+        <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
+    </div>
+    <div id="credit">© 2025 りもこ</div>
+</body>
+</html>
