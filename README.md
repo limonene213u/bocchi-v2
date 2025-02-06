@@ -97,6 +97,9 @@ https://github.com/limonene213u/bocchi-v2
 
 #ぼっちちゃんVRM #BocchiTheRockVRM でツイートしてくれると嬉しいです！🐾
 
+![bocchi](github/png/bocchi-002.png)  
+かわいい。  
+
 ---
 🛠️ 使用技術
 
@@ -141,6 +144,7 @@ Three.js - 公式サイト
 Pixiv/Three-VRM - 公式リポジトリ
 
 GSAP - 公式サイト
+
 ---
 
 ## ⚖ ライセンス
