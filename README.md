@@ -105,17 +105,19 @@ https://github.com/limonene213u/bocchi-v2
 ---
 🛠️ 使用技術
 
-Three.js - 3Dレンダリング
+[Three.js](https://threejs.org/) - 3Dレンダリング
+
+[Blender](https://www.blender.jp/)および[Unity](https://unity.com/ja) - モデリング
 
 VRM (Pixiv/Three-VRM) - 3Dキャラクターの表現
 
-GSAP - カメラワークのアニメーション
+[GSAP](https://gsap.com/) - カメラワークのアニメーション
 
-Vercel - デプロイ環境
+[Vercel](https://vercel.com/) - デプロイ環境
 
-PixAI - 一部素材の生成
+[PixAI](https://pixai.art/?lang=ja) - 一部素材の生成
 
-Vite - ビルドツール
+[Vite](https://ja.vite.dev/) - ビルドツール
 
 <br>
 
@@ -131,7 +133,7 @@ Vite - ビルドツール
 
 🔹 オマージュ & インスパイア元
 
-『ぼっち・ざ・ろっく！』 - 原作: はまじあき 先生
+『ぼっち・ざ・ろっく！』 - 原作: はまじあき 先生（[公式X](https://x.com/btr_anime)）
 
 BGM: 『シカ色デイズ』オマージュ（ギター：りもこ）
 
@@ -141,11 +143,11 @@ PixAI: 一部素材の生成
 
 🔹 ライブラリ & ツール
 
-Three.js - 公式サイト
+Three.js - [公式サイト](https://threejs.org/)
 
-Pixiv/Three-VRM - 公式リポジトリ
+Pixiv/Three-VRM - [公式リポジトリ](https://github.com/pixiv/three-vrm)
 
-GSAP - 公式サイト
+GSAP - [公式サイト](https://gsap.com/)
 
 ---
 
